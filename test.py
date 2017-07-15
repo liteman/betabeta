@@ -37,25 +37,41 @@ data = {'q': song_title}
 response = requests.get(search_url, data=data, headers=headers)
 json = response.json()
 
+artistpath = None
 song_info = None
 for hit in json["response"]["hits"]:
     if hit["result"]["primary_artist"]["name"] == "Nine Inch Nails":
+        artistpath = hit["result"]["primary_artist"]["api_path"]
         song_info = hit
         break
 
-if song_info:
-    songurl = song_info["result"]["url"]
-    lyricspage = requests.get(songurl)
+songurl = base_url + artistpath + "/songs"
+data = {"per_page": 20, "page": 1}
+print data
+response = requests.get(songurl, params=data, headers=headers)
+json = response.json()
+while json["response"]["next_page"]:
+    songlist = json["response"]["songs"]
+    data["page"] = json["response"]["next_page"]
+    print data
+    for song in songlist:
+        print song["title"]
+    response = requests.get(songurl, params=data, headers=headers) 
+    json = response.json()
 
 
-html = bs(lyricspage.text, "html.parser")
-[h.extract() for h in html('script')]
-lyrics = html.find("div", class_="lyrics").get_text()
+#if song_info:
+#    songurl = song_info["result"]["url"]
+#    lyricspage = requests.get(songurl)
 
-for part in song_parts_toremove:
-    print part
-    lyrics = re.sub(part, "", lyrics)
 
-print lyrics
+#html = bs(lyricspage.text, "html.parser")
+#[h.extract() for h in html('script')]
+#lyrics = html.find("div", class_="lyrics").get_text()
+
+#for part in song_parts_toremove:
+#    lyrics = re.sub(part, "", lyrics)
+
+#print lyrics
 
 
